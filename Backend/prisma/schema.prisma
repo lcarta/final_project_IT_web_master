@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         BigInt      @id @default(autoincrement())
+  firstname  String
+  lastname   String
+  birthdate  DateTime
+  email      String      @unique
+  isBanned   Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  credential Credential?
+  posts      Post[]
+  likes      Like[]
+
+  @@map("users")
+}
+
+model Credential {
+  id       BigInt @id @default(autoincrement())
+  password String
+
+  userId BigInt @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade, map: "fk_user_id")
+
+  @@map("credentials")
+}
+
+model Post {
+  id      BigInt @id @default(autoincrement())
+  content String
+
+  authorId BigInt    @map("author_id")
+  images   PostUrl[]
+  author   User      @relation(fields: [authorId], references: [id], onUpdate: Cascade, onDelete: Cascade, map: "fk_author_id")
+  like     Like[]
+
+  @@map("posts")
+}
+
+model PostUrl {
+  id     BigInt @id @default(autoincrement())
+  imgurl String
+  postId BigInt @map("post_id")
+
+  post Post @relation(fields: [postId], references: [id], onUpdate: Cascade, onDelete: Cascade, map: "fk_post_id")
+
+  @@map("postUrls")
+}
+
+model Like {
+  id       BigInt @id
+  authorId BigInt @map("author_id")
+  postId   BigInt @map("post_id")
+
+  post   Post @relation(fields: [postId], references: [id], onUpdate: Cascade, onDelete: Cascade, map: "fk_post_like_id")
+  author User @relation(fields: [authorId], references: [id], onUpdate: Cascade, onDelete: Cascade, map: "fk_author_like_id")
+
+  @@map("likes")
+}
